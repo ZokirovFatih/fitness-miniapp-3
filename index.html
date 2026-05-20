@@ -7,31 +7,26 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-/* ═══════════════════════════════════════════════════
-   ТОКЕНЫ
-═══════════════════════════════════════════════════ */
 :root{
-  --bg:#080808; --s1:#111; --s2:#181818; --s3:#222;
-  --red:#e8001e; --red-dim:rgba(232,0,30,.13); --red-glow:rgba(232,0,30,.3);
-  --text:#f0f0f0; --sub:#777; --sub2:#444;
-  --green:#22c55e; --blue:#3b82f6; --yellow:#f59e0b; --purple:#a855f7;
-  --border:rgba(255,255,255,.07); --r:14px; --r2:10px;
+  --bg:#080808;--s1:#111;--s2:#181818;--s3:#222;
+  --red:#e8001e;--rd:rgba(232,0,30,.13);--rg:rgba(232,0,30,.3);
+  --text:#f0f0f0;--sub:#777;--sub2:#444;
+  --green:#22c55e;--blue:#3b82f6;--yellow:#f59e0b;--purple:#a855f7;
+  --border:rgba(255,255,255,.07);--r:14px;--r2:10px;
   --font:'DM Sans',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
 
 /* NAV */
-.nav{position:fixed;bottom:0;left:0;right:0;z-index:999;
-  background:rgba(8,8,8,.97);backdrop-filter:blur(20px);
-  border-top:1px solid var(--border);
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:999;background:rgba(8,8,8,.97);
+  backdrop-filter:blur(20px);border-top:1px solid var(--border);
   display:flex;padding:6px 0 max(8px,env(safe-area-inset-bottom))}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:5px 2px;background:none;border:none;cursor:pointer;
-  color:var(--sub2);font-family:var(--font);font-size:9px;font-weight:700;
-  letter-spacing:.3px;transition:color .18s}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;
+  background:none;border:none;cursor:pointer;color:var(--sub2);font-family:var(--font);
+  font-size:9px;font-weight:700;letter-spacing:.3px;transition:color .18s}
 .nb .ni{font-size:18px;line-height:1;transition:transform .2s,filter .2s}
-.nb.on{color:var(--red)}.nb.on .ni{transform:translateY(-2px);filter:drop-shadow(0 0 6px var(--red-glow))}
+.nb.on{color:var(--red)}.nb.on .ni{transform:translateY(-2px);filter:drop-shadow(0 0 6px var(--rg))}
 
 /* PAGES */
 .pg{display:none;padding:14px 14px 82px;animation:fu .25s ease}
@@ -56,9 +51,8 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 .fg{margin-bottom:12px}
 .fl{display:block;font-size:10px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{width:100%;padding:15px;border:none;border-radius:var(--r);
-  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;
-  cursor:pointer;transition:opacity .18s;margin-top:4px}
+.btn{width:100%;padding:15px;border:none;border-radius:var(--r);font-family:'Bebas Neue',sans-serif;
+  font-size:20px;letter-spacing:1px;cursor:pointer;transition:opacity .18s;margin-top:4px}
 .btn:active{opacity:.75}.btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-red{background:var(--red);color:#fff}
 .ok{display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);
@@ -68,16 +62,35 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 .ok .ot{font-size:15px;font-weight:800;color:var(--green)}
 .ok .os{font-size:12px;color:var(--sub);margin-top:4px}
 
+/* SYNC badge */
+.sync-badge{position:fixed;top:10px;right:12px;z-index:998;
+  background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);
+  border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;
+  color:var(--green);display:none;align-items:center;gap:4px}
+.sync-badge.show{display:flex}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-err{background:rgba(232,0,30,.1);border-color:rgba(232,0,30,.3);color:var(--red)}
+
+/* PROGRESS RING */
+.prog-ring-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 0}
+.prog-ring{position:relative;width:160px;height:160px}
+.prog-ring svg{transform:rotate(-90deg)}
+.prog-ring .bg{fill:none;stroke:var(--s3);stroke-width:12}
+.prog-ring .fill{fill:none;stroke:var(--red);stroke-width:12;stroke-linecap:round;
+  stroke-dasharray:440;stroke-dashoffset:440;transition:stroke-dashoffset .8s ease}
+.prog-ring .center{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center}
+.prog-ring .pct{font-family:'Bebas Neue',sans-serif;font-size:46px;color:var(--red);line-height:1}
+.prog-ring .plbl{font-size:11px;color:var(--sub);font-weight:600}
+
 /* HOME */
-.hero{background:linear-gradient(135deg,#1c0007 0%,#0a0a0a 70%);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:22px 20px 18px;margin-bottom:12px;position:relative;overflow:hidden}
-.hero::after{content:'FREEDOM';position:absolute;right:-8px;top:6px;
-  font-family:'Bebas Neue',sans-serif;font-size:64px;
-  color:rgba(232,0,30,.04);line-height:1;pointer-events:none;letter-spacing:2px}
-.hero-tag{background:var(--red);color:#fff;font-size:9px;font-weight:800;
-  padding:3px 10px;border-radius:20px;display:inline-block;margin-bottom:10px;
-  letter-spacing:1.2px;text-transform:uppercase}
+.hero{background:linear-gradient(135deg,#1c0007 0%,#0a0a0a 70%);border:1px solid var(--border);
+  border-radius:var(--r);padding:22px 20px 18px;margin-bottom:12px;position:relative;overflow:hidden}
+.hero::after{content:'FREEDOM';position:absolute;right:-8px;top:6px;font-family:'Bebas Neue',sans-serif;
+  font-size:64px;color:rgba(232,0,30,.04);line-height:1;pointer-events:none;letter-spacing:2px}
+.hero-tag{background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:3px 10px;
+  border-radius:20px;display:inline-block;margin-bottom:10px;letter-spacing:1.2px;text-transform:uppercase}
 .hero h1{font-family:'Bebas Neue',sans-serif;font-size:38px;line-height:1.05;letter-spacing:1px}
 .hero h1 em{color:var(--red);font-style:normal}
 .hero p{margin-top:6px;color:var(--sub);font-size:12px;line-height:1.5}
@@ -104,9 +117,8 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 /* PRICES */
 .pr-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
   padding:15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.pr-card.hot{border-color:var(--red);background:var(--red-dim)}
-.pr-name{font-weight:700;font-size:14px}
-.pr-sub{font-size:11px;color:var(--sub);margin-top:2px}
+.pr-card.hot{border-color:var(--red);background:var(--rd)}
+.pr-name{font-weight:700;font-size:14px}.pr-sub{font-size:11px;color:var(--sub);margin-top:2px}
 .pr-price{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--red);text-align:right}
 .pr-unit{font-size:10px;color:var(--sub)}
 .hot-b{display:inline-block;background:var(--red);color:#fff;font-size:9px;
@@ -117,33 +129,30 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   padding:15px;display:flex;align-items:center;gap:13px;margin-bottom:8px;
   cursor:pointer;transition:border-color .18s,transform .14s}
 .tr-card:active{transform:scale(.98)}.tr-card:hover{border-color:var(--red)}
-.tr-av{width:52px;height:52px;border-radius:50%;background:var(--red-dim);
-  border:2px solid var(--red);display:flex;align-items:center;justify-content:center;
-  font-size:22px;flex-shrink:0}
-.tr-nm{font-weight:700;font-size:14px}
-.tr-sp{font-size:11px;color:var(--sub);margin-top:2px}
+.tr-av{width:52px;height:52px;border-radius:50%;background:var(--rd);border:2px solid var(--red);
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.tr-nm{font-weight:700;font-size:14px}.tr-sp{font-size:11px;color:var(--sub);margin-top:2px}
 .tr-ex{font-size:11px;color:var(--red);font-weight:700;margin-top:3px}
 .stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
 .s3b{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
 .s3b .sv{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--red)}
 .s3b .sl{font-size:10px;color:var(--sub);margin-top:2px}
-.td-head{text-align:center;padding:22px 16px;background:var(--s1);
-  border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px}
-.td-av{width:76px;height:76px;border-radius:50%;background:var(--red-dim);
-  border:3px solid var(--red);margin:0 auto 12px;
-  display:flex;align-items:center;justify-content:center;font-size:34px}
+.td-head{text-align:center;padding:22px 16px;background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:10px}
+.td-av{width:76px;height:76px;border-radius:50%;background:var(--rd);border:3px solid var(--red);
+  margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:34px}
 .td-nm{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px}
 .td-sp{color:var(--sub);font-size:13px;margin-top:4px}
-.back-btn{display:flex;align-items:center;gap:6px;color:var(--red);
-  font-size:13px;font-weight:700;cursor:pointer;margin-bottom:16px}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--red);font-size:13px;font-weight:700;
+  cursor:pointer;margin-bottom:16px}
 
-/* CHECKLIST */
+/* GOALS */
 .cl-item{background:var(--s1);border:1px solid var(--border);border-radius:var(--r2);
   padding:13px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:opacity .2s}
 .cl-item.done{opacity:.5}.cl-item.done .cl-text{text-decoration:line-through;color:var(--sub)}
-.cl-cb{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);
-  background:none;flex-shrink:0;cursor:pointer;display:flex;align-items:center;
-  justify-content:center;font-size:13px;transition:all .18s}
+.cl-cb{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:none;
+  flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:13px;transition:all .18s}
 .cl-cb.ck{background:var(--red);border-color:var(--red);color:#fff}
 .cl-text{flex:1;font-size:14px;font-weight:500}
 .cl-del{background:none;border:none;color:var(--sub2);font-size:18px;cursor:pointer;padding:2px}
@@ -153,13 +162,9 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 .add-btn{background:var(--red);border:none;border-radius:var(--r2);
   padding:0 18px;color:#fff;font-size:22px;cursor:pointer}
 .empty{text-align:center;padding:36px 20px;color:var(--sub)}
-.empty .ei{font-size:38px;margin-bottom:10px}
-.empty .et{font-size:14px;font-weight:600}
+.empty .ei{font-size:38px;margin-bottom:10px}.empty .et{font-size:14px;font-weight:600}
 
 /* STATS */
-.dash-hero{background:linear-gradient(135deg,#1c0007,#080808);
-  border:1px solid var(--red);border-radius:var(--r);padding:20px;margin-bottom:10px;text-align:center}
-.dash-score{font-family:'Bebas Neue',sans-serif;font-size:64px;color:var(--red);line-height:1}
 .kpi2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .kpi{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px}
 .kpi .kv{font-family:'Bebas Neue',sans-serif;font-size:30px;margin-bottom:2px}
@@ -173,23 +178,37 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 .bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
 .bf{width:100%;border-radius:4px 4px 0 0;background:var(--red);min-height:4px;
   transition:height .5s ease;opacity:.65}
-.bf.mx{opacity:1;box-shadow:0 0 10px var(--red-glow)}
+.bf.mx{opacity:1;box-shadow:0 0 10px var(--rg)}
 .bl{font-size:8px;color:var(--sub);font-weight:600;text-align:center}
 .prog-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 .prog-label{font-size:12px;font-weight:600;min-width:90px}
 .prog-bg{flex:1;background:var(--s3);border-radius:20px;height:8px;overflow:hidden}
 .prog-fill{height:100%;border-radius:20px;background:var(--red);transition:width .6s ease}
 .prog-val{font-size:12px;font-weight:700;color:var(--red);min-width:36px;text-align:right}
-.heatmap{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px}
-.hd{width:calc((100% - 3px*6)/7);aspect-ratio:1;border-radius:3px;
-  display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700}
-.hd.done{background:var(--red);color:#fff}
-.hd.rest{background:var(--s3);color:var(--sub2)}.hd.fut{background:var(--s2)}
+
+/* HEATMAP — кликабельные квадраты */
+.heatmap{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.hd{width:calc((100% - 4px*6)/7);aspect-ratio:1;border-radius:4px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;
+  transition:transform .1s,box-shadow .1s;user-select:none}
+.hd:active{transform:scale(.88)}
+.hd.done{background:var(--red);color:#fff;box-shadow:0 0 6px var(--rg)}
+.hd.rest{background:var(--s3);color:var(--sub2)}
+.hd.fut{background:var(--s2);color:var(--sub2);cursor:default}
+.hd-hint{font-size:11px;color:var(--sub);margin-bottom:10px}
+
+/* TOAST */
+#toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);
+  background:rgba(34,197,94,.9);color:#fff;padding:6px 18px;border-radius:20px;
+  font-size:12px;font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 </style>
 </head>
 <body>
 
-<!-- ═══ HOME ═══════════════════════════════════════════ -->
+<div class="sync-badge" id="sync-badge"><span class="sync-dot"></span><span id="sync-text">Синхронизация...</span></div>
+<div id="toast"></div>
+
+<!-- HOME -->
 <div id="pg-home" class="pg on">
   <div class="hero">
     <div class="hero-tag" id="h-city">Ташкент</div>
@@ -198,11 +217,11 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   </div>
   <div class="qgrid">
     <div class="qcard" onclick="go('schedule')"><div class="qi">📅</div><div class="ql">Расписание</div><div class="qs">Все занятия</div></div>
-    <div class="qcard" onclick="go('prices')">  <div class="qi">💰</div><div class="ql">Цены</div>       <div class="qs">Абонементы</div></div>
-    <div class="qcard" onclick="go('trainers')"><div class="qi">👥</div><div class="ql">Тренеры</div>    <div class="qs">Наша команда</div></div>
-    <div class="qcard" onclick="go('booking')"> <div class="qi">📝</div><div class="ql">Запись</div>     <div class="qs">Онлайн</div></div>
-    <div class="qcard" onclick="go('goals')">   <div class="qi">✅</div><div class="ql">Мои цели</div>  <div class="qs">Заметки</div></div>
-    <div class="qcard" onclick="go('stats')">   <div class="qi">📊</div><div class="ql">Прогресс</div>  <div class="qs">Статистика</div></div>
+    <div class="qcard" onclick="go('prices')">  <div class="qi">💰</div><div class="ql">Цены</div>      <div class="qs">Абонементы</div></div>
+    <div class="qcard" onclick="go('trainers')"><div class="qi">👥</div><div class="ql">Тренеры</div>   <div class="qs">Наша команда</div></div>
+    <div class="qcard" onclick="go('booking')"> <div class="qi">📝</div><div class="ql">Запись</div>    <div class="qs">Онлайн</div></div>
+    <div class="qcard" onclick="go('goals')">   <div class="qi">✅</div><div class="ql">Мои цели</div> <div class="qs">Заметки</div></div>
+    <div class="qcard" onclick="go('stats')">   <div class="qi">📊</div><div class="ql">Прогресс</div> <div class="qs">Статистика</div></div>
   </div>
   <div class="card">
     <div class="slabel">Контакты</div>
@@ -214,7 +233,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   </div>
 </div>
 
-<!-- ═══ SCHEDULE ════════════════════════════════════════ -->
+<!-- SCHEDULE -->
 <div id="pg-schedule" class="pg">
   <div class="ttl">Расписание <b>занятий</b></div>
   <div class="ptabs" id="day-tabs">
@@ -229,7 +248,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   <div id="sc-list"></div>
 </div>
 
-<!-- ═══ PRICES ══════════════════════════════════════════ -->
+<!-- PRICES -->
 <div id="pg-prices" class="pg">
   <div class="ttl">Наши <b>цены</b></div>
   <div class="ptabs">
@@ -245,7 +264,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   </div>
 </div>
 
-<!-- ═══ TRAINERS ════════════════════════════════════════ -->
+<!-- TRAINERS -->
 <div id="pg-trainers" class="pg">
   <div id="tr-list-v">
     <div class="ttl">Наши <b>тренеры</b></div>
@@ -257,49 +276,39 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   </div>
 </div>
 
-<!-- ═══ BOOKING ═════════════════════════════════════════ -->
+<!-- BOOKING -->
 <div id="pg-booking" class="pg">
   <div class="ttl">Онлайн <b>запись</b></div>
-  <div class="fg"><label class="fl">Ваше имя</label>
-    <input class="fi" id="b-name" placeholder="Введите имя"/></div>
-  <div class="fg"><label class="fl">Телефон</label>
-    <input class="fi" id="b-phone" type="tel" placeholder="+998 90 000-00-00"/></div>
+  <div class="fg"><label class="fl">Ваше имя</label><input class="fi" id="b-name" placeholder="Введите имя"/></div>
+  <div class="fg"><label class="fl">Телефон</label><input class="fi" id="b-phone" type="tel" placeholder="+998 90 000-00-00"/></div>
   <div class="fg"><label class="fl">Тип занятия</label>
     <select class="fs" id="b-type">
       <option value="">— Выберите —</option>
-      <option>🏋️ Тренажёрный зал</option>
-      <option>🧘 Йога / Пилатес</option>
-      <option>🥊 Бокс / HIIT</option>
-      <option>🏊 Плавание</option>
-      <option>💃 Танцы / Зумба</option>
-      <option>👨‍🏫 Персональная тренировка</option>
+      <option>🏋️ Тренажёрный зал</option><option>🧘 Йога / Пилатес</option>
+      <option>🥊 Бокс / HIIT</option><option>🏊 Плавание</option>
+      <option>💃 Танцы / Зумба</option><option>👨‍🏫 Персональная тренировка</option>
     </select></div>
   <div class="fg"><label class="fl">Тренер</label>
-    <select class="fs" id="b-trainer">
-      <option value="">— Без предпочтений —</option>
-    </select></div>
+    <select class="fs" id="b-trainer"><option value="">— Без предпочтений —</option></select></div>
   <div class="frow">
-    <div class="fg"><label class="fl">Дата</label>
-      <input class="fi" id="b-date" type="date"/></div>
+    <div class="fg"><label class="fl">Дата</label><input class="fi" id="b-date" type="date"/></div>
     <div class="fg"><label class="fl">Время</label>
       <select class="fs" id="b-time">
-        <option>06:00</option><option>07:00</option><option>08:00</option>
-        <option>09:00</option><option>10:00</option><option>11:00</option>
-        <option>12:00</option><option>14:00</option><option>16:00</option>
-        <option>18:00</option><option>19:00</option><option>20:00</option>
+        <option>06:00</option><option>07:00</option><option>08:00</option><option>09:00</option>
+        <option>10:00</option><option>11:00</option><option>12:00</option><option>14:00</option>
+        <option>16:00</option><option>18:00</option><option>19:00</option><option>20:00</option>
       </select></div>
   </div>
   <div class="fg"><label class="fl">Комментарий</label>
     <textarea class="fta" id="b-comment" placeholder="Любые пожелания..."></textarea></div>
   <button class="btn btn-red" onclick="submitBooking()" id="book-btn">ЗАПИСАТЬСЯ</button>
   <div class="ok" id="book-ok">
-    <div class="oi">🎉</div>
-    <div class="ot">Запись принята!</div>
-    <div class="os">Тренировка добавлена в статистику!</div>
+    <div class="oi">🎉</div><div class="ot">Запись принята!</div>
+    <div class="os">Тренировка добавлена в прогресс!</div>
   </div>
 </div>
 
-<!-- ═══ GOALS (чеклист) ═════════════════════════════════ -->
+<!-- GOALS -->
 <div id="pg-goals" class="pg">
   <div class="ttl">Мои <b>цели</b></div>
   <div class="ptabs" id="cat-tabs">
@@ -313,35 +322,61 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
     <input class="fi" id="cl-inp" placeholder="Добавить цель..." onkeydown="if(event.key==='Enter')addGoal()"/>
     <button class="add-btn" onclick="addGoal()">+</button>
   </div>
+  <div id="goals-stat" style="font-size:11px;color:var(--sub);margin-bottom:10px"></div>
   <div id="cl-list"></div>
 </div>
 
-<!-- ═══ STATS ════════════════════════════════════════════ -->
+<!-- STATS -->
 <div id="pg-stats" class="pg">
   <div class="ttl">Мой <b>прогресс</b></div>
-  <div class="dash-hero">
-    <div style="font-size:10px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px" id="stat-month"></div>
-    <div class="dash-score" id="stat-wo">0</div>
-    <div style="font-size:12px;color:var(--sub)">тренировок за месяц</div>
+
+  <!-- Кольцо общего прогресса -->
+  <div class="card" style="text-align:center">
+    <div class="slabel">Общий прогресс активности</div>
+    <div class="prog-ring-wrap">
+      <div class="prog-ring">
+        <svg viewBox="0 0 160 160" width="160" height="160">
+          <circle class="bg"   cx="80" cy="80" r="70"/>
+          <circle class="fill" cx="80" cy="80" r="70" id="ring-fill"/>
+        </svg>
+        <div class="center">
+          <div class="pct" id="ring-pct">0%</div>
+          <div class="plbl">активность</div>
+        </div>
+      </div>
+    </div>
+    <div id="ring-breakdown" style="font-size:12px;color:var(--sub);line-height:1.8"></div>
   </div>
+
+  <!-- KPI -->
   <div class="kpi2">
-    <div class="kpi"><div class="kv" style="color:var(--red)"    id="k-cal">0</div><div class="kl">Калорий сожжено</div><div class="kt up" id="k-cal-t"></div></div>
-    <div class="kpi"><div class="kv" style="color:var(--blue)"   id="k-min">0</div><div class="kl">Минут в зале</div>   <div class="kt eq" id="k-min-t"></div></div>
-    <div class="kpi"><div class="kv" style="color:var(--green)"  id="k-str">0</div><div class="kl">Дней подряд</div>    <div class="kt eq">серия</div></div>
-    <div class="kpi"><div class="kv" style="color:var(--yellow)" id="k-goals">0%</div><div class="kl">Целей выполнено</div><div class="kt eq" id="k-goals-t"></div></div>
+    <div class="kpi"><div class="kv" style="color:var(--red)"   id="k-wo">0</div>  <div class="kl">Тренировок</div>    <div class="kt up" id="k-wo-t"></div></div>
+    <div class="kpi"><div class="kv" style="color:var(--green)" id="k-goals">0%</div><div class="kl">Целей выполнено</div><div class="kt eq" id="k-goals-t"></div></div>
+    <div class="kpi"><div class="kv" style="color:var(--blue)"  id="k-days">0</div> <div class="kl">Дней в зале</div>   <div class="kt eq" id="k-days-t"></div></div>
+    <div class="kpi"><div class="kv" style="color:var(--yellow)"id="k-str">0</div>  <div class="kl">Дней подряд</div>   <div class="kt eq">серия</div></div>
   </div>
+
+  <!-- Прогресс по категориям -->
   <div class="chart-box">
-    <div class="chart-title">Тренировки по неделям</div>
+    <div class="chart-title">Прогресс целей по категориям</div>
+    <div id="cat-prog"></div>
+  </div>
+
+  <!-- Бар-чарт -->
+  <div class="chart-box">
+    <div class="chart-title" id="bar-title">Тренировки по неделям</div>
     <div class="bars" id="bar-chart"></div>
   </div>
+
+  <!-- Тепловая карта — кликабельная -->
   <div class="chart-box">
-    <div class="chart-title">Прогресс целей</div>
-    <div id="prog-list"></div>
-  </div>
-  <div class="chart-box">
-    <div class="chart-title">Активность месяца</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="chart-title" style="margin-bottom:0" id="hmap-title">Активность месяца</div>
+      <div style="font-size:10px;color:var(--sub)">нажмите на день ✓</div>
+    </div>
+    <div class="hd-hint" id="hmap-hint"></div>
     <div class="heatmap" id="heatmap"></div>
-    <div style="display:flex;gap:14px;margin-top:6px">
+    <div style="display:flex;gap:14px;margin-top:4px">
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--sub)">
         <div style="width:12px;height:12px;background:var(--red);border-radius:3px"></div>Тренировка</div>
       <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--sub)">
@@ -350,7 +385,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
   </div>
 </div>
 
-<!-- ═══ NAV ══════════════════════════════════════════════ -->
+<!-- NAV -->
 <nav class="nav">
   <button class="nb on" onclick="go('home')">     <span class="ni">🏠</span>Главная</button>
   <button class="nb"    onclick="go('schedule')">  <span class="ni">📅</span>Расписание</button>
@@ -361,10 +396,13 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 
 <script>
 // ═══════════════════════════════════════════════════════
-// ██ КОНФИГ — меняйте ТОЛЬКО ЗДЕСЬ ██
-// Синхронизировано с GymConfig.java
+// ██ ДАННЫЕ ИЗ JAVA КОДА — меняйте ЗДЕСЬ и в Java ██
+// Каждые 2 минуты приложение пробует обновить их с сервера.
+// Если сервер недоступен — используются данные ниже.
 // ═══════════════════════════════════════════════════════
-const CFG = {
+
+// ── GymConfig.java ────────────────────────────────────
+let CFG = {
   name:    "Freedom GYM Club",
   tagline: "Свобода быть сильным",
   city:    "Ташкент",
@@ -376,123 +414,118 @@ const CFG = {
   hours:   "Пн–Пт 06:00–23:00 · Сб–Вс 08:00–22:00",
 };
 
-// ═══════════════════════════════════════════════════════
-// ██ РАСПИСАНИЕ — меняйте ТОЛЬКО ЗДЕСЬ ██
-// Синхронизировано с ScheduleService.java
-// ═══════════════════════════════════════════════════════
-const SCHED = {
-  mon:[
-    {t:'07:00',n:'Йога',               d:'Зал №1 · 60 мин', tag:'yoga'},
-    {t:'09:00',n:'Пилатес',            d:'Зал №2 · 45 мин', tag:'yoga'},
-    {t:'18:00',n:'Зумба',              d:'Зал №1 · 60 мин', tag:'dance'},
-    {t:'19:30',n:'Функциональный тренинг',d:'Зал №3 · 60 мин',tag:'hiit'},
-  ],
-  tue:[
-    {t:'08:00',n:'Стретчинг', d:'Зал №2 · 45 мин',         tag:'yoga'},
-    {t:'10:00',n:'Аэробика',  d:'Зал №1 · 60 мин',         tag:'dance'},
-    {t:'19:00',n:'Бокс',      d:'Боксёрский зал · 90 мин', tag:'box'},
-    {t:'20:30',n:'HIIT',      d:'Зал №3 · 45 мин',         tag:'hiit'},
-  ],
-  wed:[
-    {t:'07:00',n:'Йога',     d:'Зал №1 · 60 мин', tag:'yoga'},
-    {t:'13:00',n:'Плавание', d:'Бассейн · 60 мин',tag:'swim'},
-    {t:'18:00',n:'Зумба',    d:'Зал №1 · 60 мин', tag:'dance'},
-    {t:'19:30',n:'Кроссфит', d:'Зал №3 · 60 мин', tag:'hiit'},
-  ],
-  thu:[
-    {t:'08:00',n:'Стретчинг', d:'Зал №2 · 45 мин',         tag:'yoga'},
-    {t:'19:00',n:'Бокс',      d:'Боксёрский зал · 90 мин', tag:'box'},
-    {t:'20:30',n:'HIIT',      d:'Зал №3 · 45 мин',         tag:'hiit'},
-  ],
-  fri:[
-    {t:'07:00',n:'Йога',     d:'Зал №1 · 60 мин', tag:'yoga'},
-    {t:'18:00',n:'Зумба',    d:'Зал №1 · 60 мин', tag:'dance'},
-    {t:'19:30',n:'Кроссфит', d:'Зал №3 · 60 мин', tag:'hiit'},
-  ],
-  sat:[
-    {t:'10:00',n:'Йога для начинающих',d:'Зал №1 · 60 мин',tag:'yoga'},
-    {t:'12:00',n:'Кроссфит',           d:'Зал №3 · 60 мин',tag:'hiit'},
-    {t:'15:00',n:'Танцы',              d:'Зал №2 · 60 мин',tag:'dance'},
-  ],
-  sun:[
-    {t:'11:00',n:'Семейная тренировка',d:'Зал №1 · 60 мин', tag:'hiit'},
-    {t:'13:00',n:'Плавание',           d:'Бассейн · 60 мин',tag:'swim'},
-  ],
+// ── ScheduleService.java ──────────────────────────────
+let SCHED = {
+  mon:[{t:'07:00',n:'Йога',d:'Зал №1 · 60 мин',tag:'yoga'},{t:'09:00',n:'Пилатес',d:'Зал №2 · 45 мин',tag:'yoga'},{t:'18:00',n:'Зумба',d:'Зал №1 · 60 мин',tag:'dance'},{t:'19:30',n:'Функциональный тренинг',d:'Зал №3 · 60 мин',tag:'hiit'}],
+  tue:[{t:'08:00',n:'Стретчинг',d:'Зал №2 · 45 мин',tag:'yoga'},{t:'10:00',n:'Аэробика',d:'Зал №1 · 60 мин',tag:'dance'},{t:'19:00',n:'Бокс',d:'Боксёрский зал · 90 мин',tag:'box'},{t:'20:30',n:'HIIT',d:'Зал №3 · 45 мин',tag:'hiit'}],
+  wed:[{t:'07:00',n:'Йога',d:'Зал №1 · 60 мин',tag:'yoga'},{t:'13:00',n:'Плавание',d:'Бассейн · 60 мин',tag:'swim'},{t:'18:00',n:'Зумба',d:'Зал №1 · 60 мин',tag:'dance'},{t:'19:30',n:'Кроссфит',d:'Зал №3 · 60 мин',tag:'hiit'}],
+  thu:[{t:'08:00',n:'Стретчинг',d:'Зал №2 · 45 мин',tag:'yoga'},{t:'19:00',n:'Бокс',d:'Боксёрский зал · 90 мин',tag:'box'},{t:'20:30',n:'HIIT',d:'Зал №3 · 45 мин',tag:'hiit'}],
+  fri:[{t:'07:00',n:'Йога',d:'Зал №1 · 60 мин',tag:'yoga'},{t:'18:00',n:'Зумба',d:'Зал №1 · 60 мин',tag:'dance'},{t:'19:30',n:'Кроссфит',d:'Зал №3 · 60 мин',tag:'hiit'}],
+  sat:[{t:'10:00',n:'Йога для начинающих',d:'Зал №1 · 60 мин',tag:'yoga'},{t:'12:00',n:'Кроссфит',d:'Зал №3 · 60 мин',tag:'hiit'},{t:'15:00',n:'Танцы',d:'Зал №2 · 60 мин',tag:'dance'}],
+  sun:[{t:'11:00',n:'Семейная тренировка',d:'Зал №1 · 60 мин',tag:'hiit'},{t:'13:00',n:'Плавание',d:'Бассейн · 60 мин',tag:'swim'}],
 };
 
-// ═══════════════════════════════════════════════════════
-// ██ ЦЕНЫ — меняйте ТОЛЬКО ЗДЕСЬ ██
-// Синхронизировано с PriceService.java
-// ═══════════════════════════════════════════════════════
-const PRICES = {
-  gym:[
-    {n:'Разовое посещение', s:'',           p:'30 000',    hot:false},
-    {n:'1 месяц',           s:'',           p:'350 000',   hot:false},
-    {n:'3 месяца',          s:'Скидка 15%', p:'900 000',   hot:true},
-    {n:'6 месяцев',         s:'Скидка 25%', p:'1 600 000', hot:false},
-    {n:'12 месяцев',        s:'Скидка 35%', p:'2 800 000', hot:false},
-  ],
-  group:[
-    {n:'Разовое занятие',   s:'',           p:'25 000',    hot:false},
-    {n:'8 занятий',         s:'',           p:'170 000',   hot:false},
-    {n:'12 занятий',        s:'',           p:'240 000',   hot:true},
-  ],
-  pt:[
-    {n:'1 занятие (60 мин)',s:'',           p:'150 000',   hot:false},
-    {n:'5 занятий',         s:'Пакет',      p:'680 000',   hot:true},
-    {n:'10 занятий',        s:'Пакет',      p:'1 250 000', hot:false},
-  ],
-  pool:[
-    {n:'Разовое посещение', s:'',           p:'40 000',    hot:false},
-    {n:'Месячный абонемент',s:'',           p:'400 000',   hot:true},
-  ],
+// ── PriceService.java ─────────────────────────────────
+let PRICES = {
+  gym:  [{n:'Разовое посещение',s:'',p:'30 000',hot:false},{n:'1 месяц',s:'',p:'350 000',hot:false},{n:'3 месяца',s:'Скидка 15%',p:'900 000',hot:true},{n:'6 месяцев',s:'Скидка 25%',p:'1 600 000',hot:false},{n:'12 месяцев',s:'Скидка 35%',p:'2 800 000',hot:false}],
+  group:[{n:'Разовое занятие',s:'',p:'25 000',hot:false},{n:'8 занятий',s:'',p:'170 000',hot:false},{n:'12 занятий',s:'',p:'240 000',hot:true}],
+  pt:   [{n:'1 занятие (60 мин)',s:'',p:'150 000',hot:false},{n:'5 занятий',s:'Пакет',p:'680 000',hot:true},{n:'10 занятий',s:'Пакет',p:'1 250 000',hot:false}],
+  pool: [{n:'Разовое посещение',s:'',p:'40 000',hot:false},{n:'Месячный абонемент',s:'',p:'400 000',hot:true}],
 };
 
-// ═══════════════════════════════════════════════════════
-// ██ ТРЕНЕРЫ — меняйте ТОЛЬКО ЗДЕСЬ ██
-// Синхронизировано с TrainerService.java
-// ═══════════════════════════════════════════════════════
-const TRAINERS = [
-  {emoji:'💪', name:'Алишер Каримов',  specialty:'Силовые тренировки · Бодибилдинг',
-   exp:'8 лет', clients:'120+', sessions:'1 400+', phone:'+998 90 111-22-33',
-   rank:'Мастер спорта по тяжёлой атлетике',
-   bio:'Индивидуальные программы набора массы и силы. Работает с новичками и профессионалами.'},
-  {emoji:'🧘', name:'Мадина Юсупова',  specialty:'Йога · Пилатес · Стретчинг',
-   exp:'6 лет', clients:'200+', sessions:'1 800+', phone:'+998 90 222-33-44',
-   rank:'Сертифицированный инструктор RYT-500',
-   bio:'Гибкость, баланс и ментальное здоровье для любого возраста.'},
-  {emoji:'🥊', name:'Рустам Назаров',  specialty:'Бокс · Кикбоксинг · HIIT',
-   exp:'10 лет', clients:'90+', sessions:'2 000+', phone:'+998 90 333-44-55',
-   rank:'КМС по боксу',
-   bio:'Интенсивные результативные тренировки для новичков и профессионалов.'},
-  {emoji:'🏊', name:'Нилуфар Ахмедова',specialty:'Плавание · Аквааэробика',
-   exp:'7 лет', clients:'80+', sessions:'900+', phone:'+998 90 444-55-66',
-   rank:'КМС по плаванию',
-   bio:'Обучает с нуля, совершенствует технику. Для детей и взрослых.'},
+// ── TrainerService.java ───────────────────────────────
+let TRAINERS = [
+  {emoji:'💪',name:'Алишер Каримов',specialty:'Силовые тренировки · Бодибилдинг',exp:'8 лет',clients:'120+',sessions:'1 400+',phone:'+998 90 111-22-33',rank:'Мастер спорта',bio:'Индивидуальные программы набора массы и силы. Работает с новичками и профессионалами.'},
+  {emoji:'🧘',name:'Мадина Юсупова',specialty:'Йога · Пилатес · Стретчинг',exp:'6 лет',clients:'200+',sessions:'1 800+',phone:'+998 90 222-33-44',rank:'Инструктор RYT-500',bio:'Гибкость, баланс и ментальное здоровье для любого возраста.'},
+  {emoji:'🥊',name:'Рустам Назаров',specialty:'Бокс · Кикбоксинг · HIIT',exp:'10 лет',clients:'90+',sessions:'2 000+',phone:'+998 90 333-44-55',rank:'КМС по боксу',bio:'Интенсивные результативные тренировки для новичков и профессионалов.'},
+  {emoji:'🏊',name:'Нилуфар Ахмедова',specialty:'Плавание · Аквааэробика',exp:'7 лет',clients:'80+',sessions:'900+',phone:'+998 90 444-55-66',rank:'КМС по плаванию',bio:'Обучает с нуля, совершенствует технику. Для детей и взрослых.'},
 ];
 
 // ═══════════════════════════════════════════════════════
-// ПРИМЕНЯЕМ КОНФИГ
+// СИНХРОНИЗАЦИЯ С JAVA СЕРВЕРОМ каждые 2 минуты
+// ⚠️ Укажите ваш ngrok/VPS URL или оставьте пустым
+// Если пусто — используются данные выше (из кода)
 // ═══════════════════════════════════════════════════════
-document.title = CFG.name;
-document.getElementById('h-city').textContent    = CFG.city;
-document.getElementById('h-tag').textContent     = CFG.tagline;
-document.getElementById('h-address').textContent = CFG.address;
-document.getElementById('h-phone').textContent   = CFG.phone;
-document.getElementById('h-hours').textContent   = CFG.hours;
-document.getElementById('pr-phone').textContent  = CFG.phone;
+const SERVER_URL = ""; // пример: "https://xxxx.ngrok.io"
+
+let lastSync = null;
+
+async function syncFromServer() {
+  if (!SERVER_URL) return; // нет сервера — пропускаем
+  showSyncBadge(true);
+  try {
+    const [cfg, sched, prices, trainers] = await Promise.all([
+      fetch(SERVER_URL+'/config').then(r=>r.json()).catch(()=>null),
+      fetch(SERVER_URL+'/schedule').then(r=>r.json()).catch(()=>null),
+      fetch(SERVER_URL+'/prices').then(r=>r.json()).catch(()=>null),
+      fetch(SERVER_URL+'/trainers').then(r=>r.json()).catch(()=>null),
+    ]);
+    if(cfg)      { CFG=cfg;         applyCFG(); }
+    if(sched)    { SCHED=sched;     renderSched(curDay); }
+    if(prices)   { PRICES=prices;   renderPrices(curPriceCat); }
+    if(trainers) { TRAINERS=trainers; renderTrainers(); }
+    lastSync = new Date();
+    showSyncBadge(true, true);
+    setTimeout(()=>showSyncBadge(false), 2000);
+  } catch(e) {
+    showSyncBadge(true, false, true);
+    setTimeout(()=>showSyncBadge(false), 2000);
+  }
+}
+
+function showSyncBadge(show, ok=false, err=false) {
+  const b=document.getElementById('sync-badge');
+  const t=document.getElementById('sync-text');
+  if(!show){b.classList.remove('show');return;}
+  b.classList.add('show');
+  b.classList.toggle('sync-err', err);
+  t.textContent = err ? 'Нет связи с сервером' : ok ? '✓ Синхронизировано' : 'Обновление...';
+}
+
+// Запускаем синхронизацию каждые 2 минуты
+syncFromServer();
+setInterval(syncFromServer, 2 * 60 * 1000);
 
 // ═══════════════════════════════════════════════════════
-// ХРАНИЛИЩЕ (localStorage — сохраняется между сессиями)
+// ХРАНИЛИЩЕ — localStorage (цели и активность)
+// Сохраняется постоянно, не зависит от сервера
 // ═══════════════════════════════════════════════════════
-function lsGet(k,d){try{const v=localStorage.getItem('fg_'+k);return v!=null?JSON.parse(v):d;}catch{return d;}}
-function lsSet(k,v){try{localStorage.setItem('fg_'+k,JSON.stringify(v));}catch{}}
+const K_GOALS    = 'fgym_goals_v3';
+const K_WORKOUTS = 'fgym_workouts_v3';
+const K_ACTIVITY = 'fgym_activity_v3'; // {дата: true/false}
 
-let GOALS    = lsGet('goals', []);
-let WORKOUTS = lsGet('workouts', []);
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v!=null?JSON.parse(v):d;}catch{return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch{return false;}}
+
+let GOALS    = lsGet(K_GOALS,    []);
+let WORKOUTS = lsGet(K_WORKOUTS, []);
+let ACTIVITY = lsGet(K_ACTIVITY, {}); // ключ: "2026-05-20" → true/false
 let CUR_CAT  = 'all';
+let curDay   = 'mon';
+let curPriceCat = 'gym';
 
-function save(){lsSet('goals',GOALS);lsSet('workouts',WORKOUTS);}
+function save() {
+  lsSet(K_GOALS,    GOALS);
+  lsSet(K_WORKOUTS, WORKOUTS);
+  lsSet(K_ACTIVITY, ACTIVITY);
+}
+window.addEventListener('pagehide', save);
+window.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') save(); });
+
+// ═══════════════════════════════════════════════════════
+// ПРИМЕНЯЕМ КОНФИГ К СТРАНИЦЕ
+// ═══════════════════════════════════════════════════════
+function applyCFG() {
+  document.title = CFG.name;
+  const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  s('h-city',    CFG.city);
+  s('h-tag',     CFG.tagline);
+  s('h-address', CFG.address);
+  s('h-phone',   CFG.phone);
+  s('h-hours',   CFG.hours);
+  s('pr-phone',  CFG.phone);
+}
+applyCFG();
 
 // ═══════════════════════════════════════════════════════
 // TELEGRAM
@@ -501,22 +534,30 @@ const tg = window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();}
 function tgSend(obj){try{tg?.sendData(JSON.stringify(obj));}catch(e){}}
 
+// Toast уведомление
+let toastTimer;
+function toast(msg, color='rgba(34,197,94,.9)'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.background=color; el.style.opacity='1';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.style.opacity='0', 1600);
+}
+
 // ═══════════════════════════════════════════════════════
 // НАВИГАЦИЯ
 // ═══════════════════════════════════════════════════════
-const PAGES = ['home','schedule','prices','trainers','booking','goals','stats'];
-const NAV   = {home:0,schedule:1,prices:2,goals:3,stats:4};
+const PAGES=['home','schedule','prices','trainers','booking','goals','stats'];
+const NAV={home:0,schedule:1,prices:2,goals:3,stats:4};
 
 function go(id){
   PAGES.forEach(p=>{const e=document.getElementById('pg-'+p);if(e)e.classList.remove('on');});
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
-  const pg=document.getElementById('pg-'+id);
-  if(pg)pg.classList.add('on');
+  document.getElementById('pg-'+id)?.classList.add('on');
   const ni=NAV[id];
   if(ni!==undefined)document.querySelectorAll('.nb')[ni]?.classList.add('on');
   window.scrollTo(0,0);
-  if(id==='schedule')renderSched('mon');
-  if(id==='prices')  renderPrices('gym');
+  if(id==='schedule')renderSched(curDay);
+  if(id==='prices')  renderPrices(curPriceCat);
   if(id==='trainers')renderTrainers();
   if(id==='goals')   renderGoals();
   if(id==='stats')   renderStats();
@@ -525,18 +566,17 @@ function go(id){
 // ═══════════════════════════════════════════════════════
 // РАСПИСАНИЕ
 // ═══════════════════════════════════════════════════════
+const TAG_LABEL={yoga:'Йога',box:'Бокс',hiit:'HIIT',swim:'Плавание',dance:'Танцы'};
+
 function renderSched(day){
-  document.getElementById('sc-list').innerHTML = SCHED[day].map(s=>`
+  curDay=day;
+  document.getElementById('sc-list').innerHTML=SCHED[day].map(s=>`
     <div class="sc-card">
       <div class="sc-time">${s.t}</div>
-      <div style="flex:1">
-        <div class="sc-name">${s.n}</div>
-        <div class="sc-det">${s.d}</div>
-      </div>
-      <div class="sc-tag tag-${s.tag}">${tagLabel(s.tag)}</div>
+      <div style="flex:1"><div class="sc-name">${s.n}</div><div class="sc-det">${s.d}</div></div>
+      <div class="sc-tag tag-${s.tag}">${TAG_LABEL[s.tag]||s.tag}</div>
     </div>`).join('');
 }
-function tagLabel(t){return{yoga:'Йога',box:'Бокс',hiit:'HIIT',swim:'Плавание',dance:'Танцы'}[t]||t;}
 function pickDay(d,el){
   document.querySelectorAll('#day-tabs .ptab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on'); renderSched(d);
@@ -546,16 +586,12 @@ function pickDay(d,el){
 // ЦЕНЫ
 // ═══════════════════════════════════════════════════════
 function renderPrices(cat){
-  document.getElementById('pr-list').innerHTML = PRICES[cat].map(p=>`
+  curPriceCat=cat;
+  document.getElementById('pr-list').innerHTML=PRICES[cat].map(p=>`
     <div class="pr-card ${p.hot?'hot':''}">
-      <div>
-        <div class="pr-name">${p.n}${p.hot?'<span class="hot-b">Хит</span>':''}</div>
-        ${p.s?`<div class="pr-sub">${p.s}</div>`:''}
-      </div>
-      <div>
-        <div class="pr-price">${p.p}</div>
-        <div class="pr-unit">сум</div>
-      </div>
+      <div><div class="pr-name">${p.n}${p.hot?'<span class="hot-b">Хит</span>':''}</div>
+        ${p.s?`<div class="pr-sub">${p.s}</div>`:''}</div>
+      <div><div class="pr-price">${p.p}</div><div class="pr-unit">сум</div></div>
     </div>`).join('');
 }
 function pickPrices(cat,el){
@@ -567,20 +603,13 @@ function pickPrices(cat,el){
 // ТРЕНЕРЫ
 // ═══════════════════════════════════════════════════════
 function renderTrainers(){
-  // Заполняем select в форме записи
   const sel=document.getElementById('b-trainer');
   sel.innerHTML='<option value="">— Без предпочтений —</option>';
-  TRAINERS.forEach(t=>{
-    const o=document.createElement('option');o.value=t.name;o.textContent=t.name;sel.appendChild(o);
-  });
+  TRAINERS.forEach(t=>{const o=document.createElement('option');o.value=t.name;o.textContent=t.name;sel.appendChild(o);});
   document.getElementById('tr-list').innerHTML=TRAINERS.map((t,i)=>`
     <div class="tr-card" onclick="showTrainer(${i})">
       <div class="tr-av">${t.emoji}</div>
-      <div style="flex:1">
-        <div class="tr-nm">${t.name}</div>
-        <div class="tr-sp">${t.specialty}</div>
-        <div class="tr-ex">Опыт: ${t.exp}</div>
-      </div>
+      <div style="flex:1"><div class="tr-nm">${t.name}</div><div class="tr-sp">${t.specialty}</div><div class="tr-ex">Опыт: ${t.exp}</div></div>
       <div style="color:var(--sub);font-size:20px">›</div>
     </div>`).join('');
 }
@@ -591,21 +620,16 @@ function showTrainer(i){
   document.getElementById('tr-detail').innerHTML=`
     <div class="td-head">
       <div class="td-av">${t.emoji}</div>
-      <div class="td-nm">${t.name}</div>
-      <div class="td-sp">${t.specialty}</div>
+      <div class="td-nm">${t.name}</div><div class="td-sp">${t.specialty}</div>
     </div>
     <div class="stat3">
-      <div class="s3b"><div class="sv">${t.exp}</div>   <div class="sl">Опыт</div></div>
+      <div class="s3b"><div class="sv">${t.exp}</div><div class="sl">Опыт</div></div>
       <div class="s3b"><div class="sv">${t.clients}</div><div class="sl">Клиентов</div></div>
       <div class="s3b"><div class="sv">${t.sessions}</div><div class="sl">Тренировок</div></div>
     </div>
-    <div class="card" style="color:var(--sub);font-size:13px;line-height:1.6">
-      🏆 ${t.rank}<br><br>${t.bio}
-    </div>
-    <div class="card">
-      <div class="slabel">Телефон для записи</div>
-      <div style="font-size:15px;font-weight:800;color:var(--red)">${t.phone}</div>
-    </div>
+    <div class="card" style="color:var(--sub);font-size:13px;line-height:1.6">🏆 ${t.rank}<br><br>${t.bio}</div>
+    <div class="card"><div class="slabel">Телефон</div>
+      <div style="font-size:15px;font-weight:800;color:var(--red)">${t.phone}</div></div>
     <button class="btn btn-red" onclick="bookTrainer('${t.name}')">ЗАПИСАТЬСЯ К ТРЕНЕРУ</button>`;
 }
 function backTr(){
@@ -621,11 +645,11 @@ function bookTrainer(name){
 }
 
 // ═══════════════════════════════════════════════════════
-// ЗАПИСЬ — добавляет тренировку в статистику
+// ЗАПИСЬ — добавляет тренировку в прогресс
 // ═══════════════════════════════════════════════════════
-const today=new Date().toISOString().split('T')[0];
-document.getElementById('b-date').min=today;
-document.getElementById('b-date').value=today;
+const todayStr=new Date().toISOString().split('T')[0];
+document.getElementById('b-date').min=todayStr;
+document.getElementById('b-date').value=todayStr;
 
 function submitBooking(){
   const nm=document.getElementById('b-name').value.trim();
@@ -633,20 +657,18 @@ function submitBooking(){
   const tp=document.getElementById('b-type').value;
   const dt=document.getElementById('b-date').value;
   if(!nm||!ph||!tp||!dt){alert('Заполните: имя, телефон, тип занятия и дату');return;}
-
-  // Добавляем тренировку в статистику
-  WORKOUTS.push({date:dt, type:tp, cal:320, min:60});
+  WORKOUTS.push({date:dt,type:tp,cal:320,min:60});
+  // Автоматически отмечаем день в активности
+  ACTIVITY[dt]=true;
   save();
-
+  toast('✅ Тренировка добавлена в прогресс!');
   const btn=document.getElementById('book-btn');
   btn.disabled=true;
   document.getElementById('book-ok').classList.add('show');
-
-  tgSend({action:'booking', name:nm, phone:ph, type:tp,
+  tgSend({action:'booking',name:nm,phone:ph,type:tp,
     trainer:document.getElementById('b-trainer').value,
-    date:dt, time:document.getElementById('b-time').value,
+    date:dt,time:document.getElementById('b-time').value,
     comment:document.getElementById('b-comment').value});
-
   setTimeout(()=>{
     btn.disabled=false;
     document.getElementById('book-ok').classList.remove('show');
@@ -656,8 +678,7 @@ function submitBooking(){
 }
 
 // ═══════════════════════════════════════════════════════
-// ЦЕЛИ — работает как заметки с галочками
-// Влияет на статистику в реальном времени
+// ЦЕЛИ — заметки с галочками
 // ═══════════════════════════════════════════════════════
 const CAT_EMO={workout:'🏋️',nutrition:'🥗',cardio:'🏃',rest:'😴'};
 
@@ -665,13 +686,14 @@ function addGoal(){
   const inp=document.getElementById('cl-inp');
   const txt=inp.value.trim(); if(!txt)return;
   const cat=CUR_CAT==='all'?'workout':CUR_CAT;
-  GOALS.push({id:Date.now(), text:txt, done:false, cat});
+  GOALS.push({id:Date.now(),text:txt,done:false,cat});
   inp.value=''; save(); renderGoals();
-  // Статистика обновится при следующем переходе
+  toast('✅ Цель добавлена');
 }
 function toggleGoal(id){
   const g=GOALS.find(x=>x.id===id);
-  if(g){g.done=!g.done; save(); renderGoals();}
+  if(g){g.done=!g.done; save(); renderGoals();
+    toast(g.done?'✅ Цель выполнена!':'↩️ Цель возвращена');}
 }
 function delGoal(id){
   GOALS=GOALS.filter(x=>x.id!==id); save(); renderGoals();
@@ -682,6 +704,9 @@ function pickCat(cat,el){
 }
 function renderGoals(){
   const list=CUR_CAT==='all'?GOALS:GOALS.filter(g=>g.cat===CUR_CAT);
+  const done=GOALS.filter(g=>g.done).length;
+  const si=document.getElementById('goals-stat');
+  if(si) si.textContent=GOALS.length>0?`Всего: ${GOALS.length} · Выполнено: ${done}`:'';
   const el=document.getElementById('cl-list');
   if(list.length===0){
     el.innerHTML=`<div class="empty"><div class="ei">✅</div><div class="et">Добавьте первую цель!</div></div>`;
@@ -696,12 +721,65 @@ function renderGoals(){
 }
 
 // ═══════════════════════════════════════════════════════
-// СТАТИСТИКА — строится из тренировок и целей
-// Обновляется в реальном времени
+// АКТИВНОСТЬ — кликабельный месяц
+// ═══════════════════════════════════════════════════════
+function toggleDay(dateStr, dayNum, isFuture){
+  if(isFuture) return; // будущие дни нельзя отмечать
+  ACTIVITY[dateStr] = !ACTIVITY[dateStr];
+  // Синхронизируем с тренировками
+  if(ACTIVITY[dateStr]){
+    if(!WORKOUTS.find(w=>w.date===dateStr))
+      WORKOUTS.push({date:dateStr,type:'Тренировка',cal:300,min:60});
+  } else {
+    WORKOUTS=WORKOUTS.filter(w=>w.date!==dateStr);
+  }
+  save();
+  renderHeatmap();
+  renderStats(); // обновляем статистику мгновенно
+  toast(ACTIVITY[dateStr]?`✅ ${dayNum} — тренировка отмечена`:`✖ ${dayNum} — отметка убрана`);
+}
+
+function renderHeatmap(){
+  const now=new Date();
+  const y=now.getFullYear(), m=now.getMonth();
+  const months=['Января','Февраля','Марта','Апреля','Мая','Июня',
+    'Июля','Августа','Сентября','Октября','Ноября','Декабря'];
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const todayD=now.getDate();
+  const mStr=y+'-'+String(m+1).padStart(2,'0');
+
+  const hint=document.getElementById('hmap-hint');
+  const trained=Object.keys(ACTIVITY).filter(k=>k.startsWith(mStr)&&ACTIVITY[k]).length;
+  if(hint) hint.textContent=`${months[m]}: отмечено ${trained} из ${todayD} дней`;
+
+  const title=document.getElementById('hmap-title');
+  if(title) title.textContent=`Активность — ${months[m]}`;
+
+  let h='';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=mStr+'-'+String(d).padStart(2,'0');
+    const isFuture=d>todayD;
+    const isDone=!!ACTIVITY[ds];
+    const cl=isFuture?'fut':isDone?'done':'rest';
+    const onclick=isFuture?'':` onclick="toggleDay('${ds}',${d},false)"`;
+    const title=isFuture?`${d} — будущий день`:isDone?`${d} — тренировка (нажмите чтобы убрать`:`${d} — нажмите чтобы отметить тренировку`;
+    h+=`<div class="hd ${cl}"${onclick} title="${title}">${d}</div>`;
+  }
+  document.getElementById('heatmap').innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════════════
+// СТАТИСТИКА + АЛГОРИТМ ПРОГРЕССА
+//
+// Прогресс % = взвешенная сумма всех факторов:
+//   35% — выполненные цели
+//   35% — дни активности в этом месяце
+//   20% — серия дней подряд (streak)
+//   10% — тренировки за месяц (план 20)
 // ═══════════════════════════════════════════════════════
 function calcStreak(){
-  if(!WORKOUTS.length)return 0;
   const dates=[...new Set(WORKOUTS.map(w=>w.date))].sort().reverse();
+  if(!dates.length)return 0;
   let streak=0; let cur=new Date(); cur.setHours(0,0,0,0);
   for(const d of dates){
     const wd=new Date(d); wd.setHours(0,0,0,0);
@@ -710,50 +788,68 @@ function calcStreak(){
   return streak;
 }
 
+function calcProgress(){
+  const now=new Date();
+  const mStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const todayD=now.getDate();
+
+  // 1. Цели
+  const goalPct = GOALS.length>0
+    ? Math.round(GOALS.filter(g=>g.done).length/GOALS.length*100) : 0;
+
+  // 2. Дни активности в этом месяце (из 30 дней плана)
+  const activeDays=Object.keys(ACTIVITY).filter(k=>k.startsWith(mStr)&&ACTIVITY[k]).length;
+  const planDays=Math.min(todayD, 30);
+  const actPct = planDays>0 ? Math.min(Math.round(activeDays/planDays*100), 100) : 0;
+
+  // 3. Серия подряд (из 30)
+  const streak=calcStreak();
+  const streakPct=Math.min(Math.round(streak/30*100), 100);
+
+  // 4. Тренировки за месяц (план 20)
+  const monthWo=WORKOUTS.filter(w=>w.date&&w.date.startsWith(mStr)).length;
+  const woPct=Math.min(Math.round(monthWo/20*100), 100);
+
+  // Взвешенный итог
+  const total=Math.round(goalPct*0.35 + actPct*0.35 + streakPct*0.20 + woPct*0.10);
+
+  return {total, goalPct, actPct, streakPct, woPct, activeDays, streak, monthWo};
+}
+
 function renderStats(){
   const now=new Date();
   const months=['Январь','Февраль','Март','Апрель','Май','Июнь',
     'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
   const mStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
 
-  document.getElementById('stat-month').textContent =
-    months[now.getMonth()].toUpperCase()+' '+now.getFullYear();
+  const p=calcProgress();
 
-  // Тренировки за этот месяц
-  const thisMonth=WORKOUTS.filter(w=>w.date&&w.date.startsWith(mStr));
-  const totalCal =WORKOUTS.reduce((s,w)=>s+(w.cal||0),0);
-  const totalMin =WORKOUTS.reduce((s,w)=>s+(w.min||0),0);
-  const streak   =calcStreak();
+  // Кольцо прогресса
+  const circumference=440;
+  const offset=circumference-(circumference*p.total/100);
+  const ring=document.getElementById('ring-fill');
+  const rPct=document.getElementById('ring-pct');
+  if(ring) ring.style.strokeDashoffset=offset;
+  if(rPct) rPct.textContent=p.total+'%';
 
-  // Цели
-  const doneGoals=GOALS.filter(g=>g.done).length;
-  const goalPct  =GOALS.length>0?Math.round(doneGoals/GOALS.length*100):0;
+  const bd=document.getElementById('ring-breakdown');
+  if(bd) bd.innerHTML=`
+    🎯 Цели: ${p.goalPct}% &nbsp;·&nbsp;
+    📅 Активность: ${p.actPct}% &nbsp;·&nbsp;
+    🔥 Серия: ${p.streakPct}% &nbsp;·&nbsp;
+    🏋️ Тренировки: ${p.woPct}%`;
 
-  // Обновляем KPI
+  // KPI
   const s=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  s('stat-wo',   thisMonth.length);
-  s('k-cal',     totalCal.toLocaleString());
-  s('k-cal-t',   totalCal>0?'Продолжайте!':'Запишитесь на тренировку');
-  s('k-min',     totalMin);
-  s('k-min-t',   totalMin>0?'≈ '+Math.round(totalMin/60)+' ч в зале':'—');
-  s('k-str',     streak);
-  s('k-goals',   goalPct+'%');
-  s('k-goals-t', doneGoals+' из '+GOALS.length+' выполнено');
+  s('k-wo',      p.monthWo);
+  s('k-wo-t',    p.monthWo>0?'за этот месяц':'Запишитесь!');
+  s('k-goals',   p.goalPct+'%');
+  s('k-goals-t', GOALS.filter(g=>g.done).length+' из '+GOALS.length);
+  s('k-days',    p.activeDays);
+  s('k-days-t',  'в этом месяце');
+  s('k-str',     p.streak);
 
-  // Бар-чарт по неделям
-  const weeks=[0,0,0,0];
-  thisMonth.forEach(w=>{
-    const d=parseInt((w.date||'').split('-')[2]||1);
-    weeks[Math.min(Math.ceil(d/7)-1,3)]++;
-  });
-  const mx=Math.max(...weeks,1);
-  document.getElementById('bar-chart').innerHTML=weeks.map((v,i)=>`
-    <div class="bw">
-      <div class="bf ${v===mx&&v>0?'mx':''}" style="height:${(v/mx)*100}%"></div>
-      <div class="bl">Нед ${i+1}<br><b>${v}</b></div>
-    </div>`).join('');
-
-  // Прогресс целей по категориям
+  // Прогресс по категориям целей
   const cats=[['workout','🏋️ Тренировки'],['nutrition','🥗 Питание'],
               ['cardio','🏃 Кардио'],['rest','😴 Отдых']];
   let ph='';
@@ -767,18 +863,26 @@ function renderStats(){
       <div class="prog-val">${pct}%</div>
     </div>`;
   });
-  document.getElementById('prog-list').innerHTML = ph ||
-    '<div style="font-size:12px;color:var(--sub);text-align:center;padding:12px">Добавьте цели в разделе «Цели»</div>';
+  document.getElementById('cat-prog').innerHTML=ph||
+    '<div style="font-size:12px;color:var(--sub);text-align:center;padding:8px">Добавьте цели во вкладке «Цели»</div>';
+
+  // Бар-чарт
+  const weeks=[0,0,0,0];
+  WORKOUTS.filter(w=>w.date&&w.date.startsWith(mStr)).forEach(w=>{
+    const d=parseInt(w.date.split('-')[2]||1);
+    weeks[Math.min(Math.ceil(d/7)-1,3)]++;
+  });
+  const mx=Math.max(...weeks,1);
+  document.getElementById('bar-title').textContent=
+    months[now.getMonth()]+' — тренировки по неделям';
+  document.getElementById('bar-chart').innerHTML=weeks.map((v,i)=>`
+    <div class="bw">
+      <div class="bf ${v===mx&&v>0?'mx':''}" style="height:${(v/mx)*100}%"></div>
+      <div class="bl">Нед ${i+1}<br><b>${v}</b></div>
+    </div>`).join('');
 
   // Тепловая карта
-  const days=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
-  const trained=new Set(thisMonth.map(w=>parseInt((w.date||'').split('-')[2])));
-  let h='';
-  for(let d=1;d<=days;d++){
-    const cl=d>now.getDate()?'fut':trained.has(d)?'done':'rest';
-    h+=`<div class="hd ${cl}">${d}</div>`;
-  }
-  document.getElementById('heatmap').innerHTML=h;
+  renderHeatmap();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -787,6 +891,3 @@ function renderStats(){
 renderSched('mon');
 renderPrices('gym');
 renderTrainers();
-</script>
-</body>
-</html>
