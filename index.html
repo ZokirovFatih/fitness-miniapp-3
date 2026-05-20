@@ -622,31 +622,64 @@ const PRICES = {
 // ══════════════════════════════════════════════════
 // TELEGRAM
 // ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// TELEGRAM
+// ══════════════════════════════════════════════════
 const tg = window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();}
 function tgSend(obj){try{tg?.sendData(JSON.stringify(obj));}catch(e){}}
 
 // ══════════════════════════════════════════════════
-// ХРАНИЛИЩЕ (localStorage)
+// API — все данные хранятся в Java боте
+// ⚠️ Укажите адрес вашего сервера:
+//   Локально:  http://localhost:8080
+//   VPS:       http://ВАШ_IP:8080
+//   ngrok:     https://xxxx.ngrok.io
 // ══════════════════════════════════════════════════
-function lsGet(k,d){try{const v=localStorage.getItem('fl_'+k);return v!=null?JSON.parse(v):d;}catch{return d;}}
-function lsSet(k,v){try{localStorage.setItem('fl_'+k,JSON.stringify(v));}catch{}}
+const API = "http://localhost:8080";
 
-let USER     = lsGet('user',null);
-let TASKS    = lsGet('tasks',[
-  {id:1,text:'Пробежка 30 минут',done:false,cat:'cardio'},
-  {id:2,text:'Приседания 4×12',done:false,cat:'workout'},
-  {id:3,text:'Выпить 2л воды',done:false,cat:'nutrition'},
-  {id:4,text:'Сон 8 часов',done:false,cat:'rest'},
-]);
-let WORKOUTS = lsGet('workouts',[]);
-let FRIENDS  = lsGet('friends',[
-  {name:'Джамшид А.',uid:'FL-DEMO1',emoji:'🧔',workouts:12,streak:5,online:true},
-]);
+async function apiGet(path) {
+  const r = await fetch(API + path);
+  return r.json();
+}
+async function apiPost(path, body) {
+  const r = await fetch(API + path, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+// ── Состояние приложения ───────────────────────────
+let USER     = null;   // {uid, name, email, workouts, calories, minutes, streak, friends}
+let TASKS    = [];     // [{id, text, done, cat}]
+let WORKOUTS = [];     // [{date, type, cal, min}]
+let FRIENDS  = [];     // [{uid, name, workouts, streak}]
 let CUR_CAT  = 'all';
 let STAT_TAB = 'mine';
 
-function saveAll(){lsSet('user',USER);lsSet('tasks',TASKS);lsSet('workouts',WORKOUTS);lsSet('friends',FRIENDS);}
+// localStorage только для сессии (uid) — данные на сервере
+function lsGet(k,d){try{const v=localStorage.getItem('fl_'+k);return v!=null?JSON.parse(v):d;}catch{return d;}}
+function lsSet(k,v){try{localStorage.setItem('fl_'+k,JSON.stringify(v));}catch{}}
+
+// ── Загрузить данные пользователя с сервера ────────
+async function loadUserData(uid) {
+  try {
+    const [profile, tasksRes, workoutsRes, friendsRes] = await Promise.all([
+      apiGet('/profile?uid=' + uid),
+      apiGet('/tasks?uid='    + uid),
+      apiGet('/workouts?uid=' + uid),
+      apiGet('/friends?uid='  + uid),
+    ]);
+    if(profile.ok) USER = profile;
+    if(tasksRes.ok)    TASKS    = tasksRes.tasks    || [];
+    if(workoutsRes.ok) WORKOUTS = workoutsRes.workouts || [];
+    if(friendsRes.ok)  FRIENDS  = friendsRes.friends  || [];
+  } catch(e) {
+    console.error('Ошибка загрузки данных:', e);
+  }
+}
 
 // ══════════════════════════════════════════════════
 // НАВИГАЦИЯ
@@ -662,27 +695,19 @@ function go(id){
   const ni=NAV_IDX[id];
   if(ni!==undefined)document.querySelectorAll('.nb')[ni]?.classList.add('on');
   window.scrollTo(0,0);
-  if(id==='schedule')renderSched('mon');
-  if(id==='prices')  renderPrices('gym');
-  if(id==='trainers')renderTrainers();
-  if(id==='checklist')renderTasks();
-  if(id==='friends') renderFriends();
-  if(id==='stats')   initStats();
-  if(id==='auth')    renderAuth();
-  if(id==='home')    renderHomeUser();
+  if(id==='schedule') renderSched('mon');
+  if(id==='prices')   renderPrices('gym');
+  if(id==='trainers') renderTrainers();
+  if(id==='checklist') renderTasks();
+  if(id==='friends')  renderFriends();
+  if(id==='stats')    initStats();
+  if(id==='auth')     renderAuth();
+  if(id==='home')     renderHomeUser();
 }
 
 // ══════════════════════════════════════════════════
-// AUTH — Email + Password
+// AUTH — запросы к Java серверу
 // ══════════════════════════════════════════════════
-function genUID(){
-  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s='FL-';for(let i=0;i<6;i++)s+=c[Math.floor(Math.random()*c.length)];return s;
-}
-function hashPwd(s){let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(31,h)+s.charCodeAt(i))|0;return h.toString(36);}
-function getUsers(){return lsGet('users',{});}
-function saveUsers(u){lsSet('users',u);}
-
 function switchTab(tab,el){
   document.querySelectorAll('.atab').forEach(t=>t.classList.remove('on'));
   el.classList.add('on');
@@ -692,43 +717,59 @@ function switchTab(tab,el){
   document.getElementById('reg-err').classList.remove('show');
 }
 
-function doRegister(){
+async function doRegister(){
   const name  = document.getElementById('r-name').value.trim();
   const email = document.getElementById('r-email').value.trim().toLowerCase();
   const pass  = document.getElementById('r-pass').value;
   const pass2 = document.getElementById('r-pass2').value;
   const err   = document.getElementById('reg-err');
   err.classList.remove('show');
-  if(name.length<2)           {showErr(err,'Введите имя (минимум 2 символа)');return;}
-  if(!email.includes('@'))    {showErr(err,'Введите корректный email');return;}
-  if(pass.length<6)           {showErr(err,'Пароль минимум 6 символов');return;}
-  if(pass!==pass2)            {showErr(err,'Пароли не совпадают');return;}
-  const users=getUsers();
-  if(users[email])            {showErr(err,'Этот email уже зарегистрирован');return;}
-  const uid=genUID();
-  const user={uid,name,email,hash:hashPwd(pass)};
-  users[email]=user;
-  saveUsers(users);
-  USER=user;saveAll();
-  tgSend({action:'register',name,email,uid});
-  renderAuth();renderHomeUser();
+  if(name.length<2)      {showErr(err,'Введите имя (минимум 2 символа)');return;}
+  if(!email.includes('@')){showErr(err,'Введите корректный email');return;}
+  if(pass.length<6)      {showErr(err,'Пароль минимум 6 символов');return;}
+  if(pass!==pass2)       {showErr(err,'Пароли не совпадают');return;}
+
+  try {
+    const res = await apiPost('/register', {name, email, password:pass});
+    if(res.ok) {
+      USER = res;
+      lsSet('uid', res.uid);  // запоминаем uid для автовхода
+      TASKS=[];WORKOUTS=[];FRIENDS=[];
+      tgSend({action:'register', name, email, uid:res.uid});
+      renderAuth(); renderHomeUser();
+    } else {
+      showErr(err, res.error || 'Ошибка регистрации');
+    }
+  } catch(e) {
+    showErr(err, 'Сервер недоступен. Убедитесь что бот запущен.');
+  }
 }
 
-function doLogin(){
+async function doLogin(){
   const email = document.getElementById('l-email').value.trim().toLowerCase();
   const pass  = document.getElementById('l-pass').value;
   const err   = document.getElementById('login-err');
   err.classList.remove('show');
-  const users=getUsers();
-  const u=users[email];
-  if(!u||u.hash!==hashPwd(pass)){showErr(err,'Неверный email или пароль');return;}
-  USER=u;saveAll();
-  tgSend({action:'login',email,uid:u.uid});
-  renderAuth();renderHomeUser();
+
+  try {
+    const res = await apiPost('/login', {email, password:pass});
+    if(res.ok) {
+      USER = res;
+      lsSet('uid', res.uid);
+      await loadUserData(res.uid);
+      tgSend({action:'login', email, uid:res.uid});
+      renderAuth(); renderHomeUser();
+    } else {
+      showErr(err, res.error || 'Неверный email или пароль');
+    }
+  } catch(e) {
+    showErr(err, 'Сервер недоступен. Убедитесь что бот запущен.');
+  }
 }
 
 function doLogout(){
-  USER=null;saveAll();
+  USER=null; TASKS=[];WORKOUTS=[];FRIENDS=[];
+  lsSet('uid', null);
   document.getElementById('profile-view').style.display='none';
   document.getElementById('auth-form').style.display='block';
   renderHomeUser();
@@ -742,36 +783,37 @@ function renderAuth(){
   }
   document.getElementById('auth-form').style.display='none';
   document.getElementById('profile-view').style.display='block';
-  document.getElementById('pv-av').textContent    = USER.name[0].toUpperCase();
-  document.getElementById('pv-name').textContent  = USER.name;
-  document.getElementById('pv-email').textContent = USER.email;
-  document.getElementById('pv-uid').textContent   = 'ID: '+USER.uid+' — нажмите скопировать';
-  document.getElementById('pv-uid-big').textContent = USER.uid;
-  document.getElementById('pv-wo').textContent    = WORKOUTS.length;
-  document.getElementById('pv-fr').textContent    = FRIENDS.length;
-  document.getElementById('pv-tasks').textContent = TASKS.filter(t=>t.done).length;
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('pv-av',    USER.name[0].toUpperCase());
+  set('pv-name',  USER.name);
+  set('pv-email', USER.email);
+  set('pv-uid',   'ID: '+USER.uid+' — нажмите скопировать');
+  set('pv-uid-big', USER.uid);
+  set('pv-wo',    USER.workouts || WORKOUTS.length);
+  set('pv-fr',    USER.friends  || FRIENDS.length);
+  set('pv-tasks', TASKS.filter(t=>t.done).length);
 }
 
 function renderHomeUser(){
   const b=document.getElementById('home-user');
   if(USER){
     b.style.display='flex';
-    document.getElementById('home-av').textContent   = USER.name[0].toUpperCase();
-    document.getElementById('home-name').textContent = USER.name;
-    document.getElementById('home-uid').textContent  = 'ID: '+USER.uid;
-    document.getElementById('my-uid').textContent    = USER.uid;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set('home-av',   USER.name[0].toUpperCase());
+    set('home-name', USER.name);
+    set('home-uid',  'ID: '+USER.uid);
+    set('my-uid',    USER.uid);
   } else {
     b.style.display='none';
-    document.getElementById('my-uid').textContent='Войдите чтобы получить ID';
+    const el=document.getElementById('my-uid');
+    if(el) el.textContent='Войдите чтобы получить ID';
   }
 }
 
 function copyUID(){
-  const id=USER?.uid||'';
-  if(!id)return;
+  const id=USER?.uid||'';if(!id)return;
   navigator.clipboard?.writeText(id).catch(()=>{});
-  const els=['pv-uid-big','my-uid'];
-  els.forEach(eid=>{
+  ['pv-uid-big','my-uid'].forEach(eid=>{
     const el=document.getElementById(eid);
     if(el){const old=el.textContent;el.textContent='✅ Скопировано!';setTimeout(()=>el.textContent=old,1500);}
   });
@@ -871,23 +913,29 @@ function bookTrainer(name){
 }
 
 // ══════════════════════════════════════════════════
-// ЗАПИСЬ — сохраняет тренировку в статистику
+// ЗАПИСЬ — сохраняет тренировку в Java бот
 // ══════════════════════════════════════════════════
 const todayStr=new Date().toISOString().split('T')[0];
 document.getElementById('b-date').min=todayStr;
 document.getElementById('b-date').value=todayStr;
 
-function submitBooking(){
+async function submitBooking(){
   const nm=document.getElementById('b-name').value.trim();
   const ph=document.getElementById('b-phone').value.trim();
   const tp=document.getElementById('b-type').value;
   const dt=document.getElementById('b-date').value;
   if(!nm||!ph||!tp||!dt){alert('Заполните: имя, телефон, тип занятия и дату');return;}
-  // Добавляем тренировку в статистику
-  WORKOUTS.push({date:dt,type:tp,cal:320,min:60});
-  saveAll();
   const btn=document.getElementById('book-btn');
   btn.disabled=true;
+  // Сохраняем тренировку в Java бот
+  if(USER) {
+    try {
+      const res = await apiPost('/workout/add', {
+        uid:USER.uid, type:tp, cal:320, min:60, date:dt
+      });
+      if(res.ok) WORKOUTS = res.workouts;
+    } catch(e) { console.error('workout save error', e); }
+  }
   document.getElementById('book-ok').classList.add('show');
   tgSend({action:'booking',name:nm,phone:ph,type:tp,
     trainer:document.getElementById('b-trainer').value,
@@ -902,25 +950,34 @@ function submitBooking(){
 }
 
 // ══════════════════════════════════════════════════
-// ЧЕКЛИСТ — сохраняется в localStorage
+// ЧЕКЛИСТ — сохраняется в Java бот
 // ══════════════════════════════════════════════════
 const CAT_EMO={workout:'🏋️',nutrition:'🥗',cardio:'🏃',rest:'😴'};
 
-function addTask(){
+async function addTask(){
+  if(!USER){alert('Войдите в аккаунт чтобы добавлять цели');return;}
   const inp=document.getElementById('cl-inp');
   const txt=inp.value.trim();
   if(!txt)return;
   const cat=CUR_CAT==='all'?'workout':CUR_CAT;
-  TASKS.push({id:Date.now(),text:txt,done:false,cat});
-  inp.value='';saveAll();renderTasks();
-  tgSend({action:'task_sync',count:TASKS.length,done:TASKS.filter(t=>t.done).length});
+  try {
+    const res = await apiPost('/task/add', {uid:USER.uid, text:txt, cat});
+    if(res.ok){ TASKS=res.tasks; inp.value=''; renderTasks(); }
+  } catch(e) { console.error('task add error', e); }
 }
-function toggleTask(id){
-  const t=TASKS.find(x=>x.id===id);
-  if(t){t.done=!t.done;saveAll();renderTasks();}
+async function toggleTask(id){
+  if(!USER)return;
+  try {
+    const res = await apiPost('/task/toggle', {uid:USER.uid, taskId:id});
+    if(res.ok){ TASKS=res.tasks; renderTasks(); }
+  } catch(e) { console.error('task toggle error', e); }
 }
-function delTask(id){
-  TASKS=TASKS.filter(x=>x.id!==id);saveAll();renderTasks();
+async function delTask(id){
+  if(!USER)return;
+  try {
+    const res = await apiPost('/task/delete', {uid:USER.uid, taskId:id});
+    if(res.ok){ TASKS=res.tasks; renderTasks(); }
+  } catch(e) { console.error('task delete error', e); }
 }
 function pickCat(cat,el){
   document.querySelectorAll('#cl-cats .ptab').forEach(t=>t.classList.remove('on'));
@@ -929,6 +986,10 @@ function pickCat(cat,el){
 function renderTasks(){
   const list=CUR_CAT==='all'?TASKS:TASKS.filter(t=>t.cat===CUR_CAT);
   const el=document.getElementById('cl-list');
+  if(!USER){
+    el.innerHTML=`<div class="empty"><div class="ei">👤</div><div class="et">Войдите чтобы видеть цели</div></div>`;
+    return;
+  }
   if(list.length===0){
     el.innerHTML=`<div class="empty"><div class="ei">✅</div><div class="et">Добавьте первую цель!</div></div>`;
     return;
@@ -942,43 +1003,45 @@ function renderTasks(){
 }
 
 // ══════════════════════════════════════════════════
-// ДРУЗЬЯ
+// ДРУЗЬЯ — через Java бот
 // ══════════════════════════════════════════════════
 function renderFriends(){
   document.getElementById('fr-count').textContent=FRIENDS.length;
   const el=document.getElementById('fr-list');
+  if(!USER){
+    el.innerHTML=`<div class="empty"><div class="ei">👤</div><div class="et">Войдите чтобы добавлять друзей</div></div>`;
+    return;
+  }
   if(FRIENDS.length===0){
     el.innerHTML=`<div class="empty"><div class="ei">🤝</div><div class="et">Добавьте друзей по ID</div></div>`;
     return;
   }
   el.innerHTML=FRIENDS.map(f=>`
     <div class="fr-card">
-      <div class="fr-av ${f.online?'on':''}">${f.emoji}</div>
+      <div class="fr-av">🏋️</div>
       <div style="flex:1">
-        <div style="font-size:14px;font-weight:700">${f.online?'<span class="online-dot"></span>':''}${f.name}</div>
+        <div style="font-size:14px;font-weight:700">${f.name}</div>
         <div style="font-size:10px;color:var(--sub);margin-top:2px">ID: ${f.uid}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red)">${f.workouts}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red)">${f.workouts||0}</div>
         <div style="font-size:10px;color:var(--sub)">тренировок</div>
       </div>
     </div>`).join('');
 }
-function addFriend(){
+async function addFriend(){
+  if(!USER){alert('Войдите в аккаунт');return;}
   const inp=document.getElementById('fr-inp');
   const id=inp.value.trim().toUpperCase();
   const err=document.getElementById('fr-err');
   err.classList.remove('show');
   if(!id){showErr(err,'Введите ID друга');return;}
-  if(id===USER?.uid){showErr(err,'Нельзя добавить самого себя');return;}
-  if(FRIENDS.find(f=>f.uid===id)){showErr(err,'Этот пользователь уже в друзьях');inp.value='';return;}
-  FRIENDS.push({
-    name:'Пользователь '+id.slice(-3),uid:id,emoji:'🏋️',
-    workouts:Math.floor(Math.random()*20),streak:Math.floor(Math.random()*14),online:false
-  });
-  inp.value='';saveAll();
-  tgSend({action:'add_friend',uid:id});
-  renderFriends();
+  if(id===USER.uid){showErr(err,'Нельзя добавить самого себя');return;}
+  try {
+    const res = await apiPost('/friend/add', {uid:USER.uid, friendUid:id});
+    if(res.ok){ FRIENDS=res.friends; inp.value=''; renderFriends(); }
+    else showErr(err, res.error||'Ошибка');
+  } catch(e) { showErr(err,'Сервер недоступен'); }
 }
 
 // ══════════════════════════════════════════════════
@@ -1113,13 +1176,58 @@ function renderCompare(){
 }
 
 // ══════════════════════════════════════════════════
-// ИНИЦИАЛИЗАЦИЯ
+// ИНИЦИАЛИЗАЦИЯ — загружаем всё с Java сервера
 // ══════════════════════════════════════════════════
-renderSched('mon');
-renderPrices('gym');
-renderTrainers();
-renderHomeUser();
-renderAuth();
+async function init() {
+  // 1. Сразу рисуем статичные данные
+  renderSched('mon');
+  renderPrices('gym');
+  renderTrainers();
+
+  // 2. Загружаем конфиг клуба с Java сервера
+  try {
+    const cfg = await apiGet('/config');
+    if(cfg && cfg.name) applyCFG(cfg);
+  } catch(e) {
+    console.log('Конфиг: используется запасной');
+  }
+
+  // 3. Загружаем расписание с Java сервера
+  try {
+    const sched = await apiGet('/schedule');
+    if(sched && typeof sched === 'object') {
+      Object.assign(SCHED, sched);
+      renderSched('mon');
+    }
+  } catch(e) { console.log('Расписание: используется встроенное'); }
+
+  // 4. Загружаем тренеров с Java сервера
+  try {
+    const trs = await apiGet('/trainers');
+    if(Array.isArray(trs) && trs.length > 0) {
+      TRAINERS.length = 0;
+      trs.forEach(t => TRAINERS.push(t));
+      renderTrainers();
+    }
+  } catch(e) { console.log('Тренеры: используются встроенные'); }
+
+  // 5. Восстанавливаем сессию — если uid сохранён
+  const savedUid = lsGet('uid', null);
+  if(savedUid) {
+    try {
+      const profile = await apiGet('/profile?uid=' + savedUid);
+      if(profile.ok) {
+        USER = profile;
+        await loadUserData(savedUid);
+      }
+    } catch(e) { console.log('Сессия не восстановлена'); }
+  }
+
+  renderHomeUser();
+  renderAuth();
+}
+
+init();
 </script>
 </body>
 </html>
